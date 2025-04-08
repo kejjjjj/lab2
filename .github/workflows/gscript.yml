@@ -1,0 +1,75 @@
+name: Label & comment issues
+
+on:
+  issues:
+    types:
+      - reopened
+      - opened
+      - closed
+  pull_request:
+    types:
+      - opened
+
+jobs:
+  label_issues:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Attach label to issues
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ["issue", "fix"]
+            })
+
+      - name: Comment on new issue
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            Thanks for opening this issue! We'll take a look as soon as possible.
+
+  comment_on_issue_close:
+    if: github.event_name == 'issues' && github.event.action == 'closed' # tapahtuuko issue ja onko se kiinni
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: kommentti kun issue suljetaan
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            resolved!
+
+  first_pr_comment:
+    if: github.event_name == 'pull_request' && github.event.action == 'opened' # tapahtuuko pull request ja onko se auki
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write # kirjoittaa pull requesteihin
+    steps:
+      - name: Kato onko eka pull request
+        id: check
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data: pulls } = await github.rest.pulls.list({ // hae kaikki pull requestit
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+            const userPRs = pulls.filter(pr => pr.user.login === context.payload.pull_request.user.login);
+            return userPRs.length === 1;  // eka pulla request jos totta
+
+      - name: Kommentti ekaan pull request
+        if: steps.check.outputs.result == 'true'
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            first pull request
