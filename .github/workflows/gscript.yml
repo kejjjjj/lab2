@@ -44,7 +44,7 @@ jobs:
             return userPRs.length === 1;  // eka pulla request jos totta
 
       - name: Kommentti ekaan pull request
-        if: steps.check.outputs.result == 'true'
+        if: steps.check.outputs.result == 'false'
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
