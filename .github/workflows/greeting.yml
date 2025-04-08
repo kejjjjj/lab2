@@ -3,6 +3,7 @@ name: Greeting
 on:
   pull_request:
   issues:
+
 permissions:
   pull_request: write
   issues: write
@@ -10,8 +11,8 @@ jobs:
   greeting:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/first-interaction@v1
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+    - uses: actions/first-interaction@v1
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
         pr-message: |
           Teit ensimmäisen Pull requesting. Hyvä!
