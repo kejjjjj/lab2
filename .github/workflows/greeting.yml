@@ -1,6 +1,8 @@
 name: Greeting
 
-on: [pull_request, issues]
+on:
+  pull_request:
+  issues:
 permissions:
   pull_request: write
   issues: write
