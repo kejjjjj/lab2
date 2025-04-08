@@ -2,17 +2,40 @@ name: Greeting
 
 on:
   pull_request:
-  issues:
-
-permissions:
-  pull_request: write
-  issues: write
+    types:
+      - opened
 jobs:
-  greeting:
+  # greeting:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/first-interaction@v1
+  #     with:
+  #       repo-token: ${{ secrets.GITHUB_TOKEN }}
+  #       pr-message: |
+  #         Teit ensimmäisen Pull requesting. Hyvä!
+  first_pr_comment:
+    if: github.event_name == 'pull_request' && github.event.action == 'opened' # tapahtuuko pull request ja onko se auki
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write # kirjoittaa pull requesteihin
     steps:
-    - uses: actions/first-interaction@v1
-      with:
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        pr-message: |
-          Teit ensimmäisen Pull requesting. Hyvä!
+      - name: Kato onko eka pull request
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pulls } = await github.rest.pulls.list({ // hae kaikki pull requestit
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+            const userPRs = pulls.filter(pr => pr.user.login === context.payload.pull_request.user.login);
+            return userPRs.length === 1;  // eka pulla request jos totta
+
+      - name: Kommentti ekaan pull request
+        if: steps.check.outputs.result == 'true'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            Ensimmainen pull request. Hyvä!
